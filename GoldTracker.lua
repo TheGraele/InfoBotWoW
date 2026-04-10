@@ -5,6 +5,9 @@ local addonName, ns = ...
 ns.GoldTracker = {}
 local GT = ns.GoldTracker
 
+-- Store the money event frame so it can be cleaned up on logout.
+local moneyFrame = nil
+
 local function SaveCurrentGold()
     local key  = ns.GetCharKey()
     local name = UnitName("player")
@@ -28,15 +31,22 @@ function GT:OnLogin()
     SaveCurrentGold()
 
     -- Update gold whenever money changes.
-    local f = CreateFrame("Frame")
-    f:RegisterEvent("PLAYER_MONEY")
-    f:SetScript("OnEvent", function()
+    if moneyFrame then
+        moneyFrame:UnregisterAllEvents()
+    end
+    moneyFrame = CreateFrame("Frame")
+    moneyFrame:RegisterEvent("PLAYER_MONEY")
+    moneyFrame:SetScript("OnEvent", function()
         SaveCurrentGold()
     end)
 end
 
 function GT:OnLogout()
     SaveCurrentGold()
+    if moneyFrame then
+        moneyFrame:UnregisterAllEvents()
+        moneyFrame = nil
+    end
 end
 
 -- Returns the net gold change since the session started (may be negative).

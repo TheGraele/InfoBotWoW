@@ -49,5 +49,6 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     elseif event == "PLAYER_LOGOUT" then
         -- Save current gold before the session ends.
         ns.GoldTracker:OnLogout()
+        ns.AuctionTracker:OnLogout()
     end
 end)

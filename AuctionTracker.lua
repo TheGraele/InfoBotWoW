@@ -11,6 +11,9 @@ local STATUS_TEXT = {
     [2] = " |cffaaaaaa[EXPIRED]|r",
 }
 
+-- Store the auction event frame so it can be cleaned up on logout.
+local auctionFrame = nil
+
 local function ScanOwnedAuctions()
     local key     = ns.GetCharKey()
     local count   = C_AuctionHouse.GetNumOwnedAuctions()
@@ -91,10 +94,13 @@ function AT:GetStatusText(status)
 end
 
 function AT:OnLogin()
-    local f = CreateFrame("Frame")
-    f:RegisterEvent("AUCTION_HOUSE_SHOW")
-    f:RegisterEvent("OWNED_AUCTIONS_UPDATED")
-    f:SetScript("OnEvent", function(_, event)
+    if auctionFrame then
+        auctionFrame:UnregisterAllEvents()
+    end
+    auctionFrame = CreateFrame("Frame")
+    auctionFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
+    auctionFrame:RegisterEvent("OWNED_AUCTIONS_UPDATED")
+    auctionFrame:SetScript("OnEvent", function(_, event)
         if event == "AUCTION_HOUSE_SHOW" then
             -- Request owned auctions; results arrive via OWNED_AUCTIONS_UPDATED.
             C_AuctionHouse.QueryOwnedAuctions({
@@ -108,4 +114,12 @@ function AT:OnLogin()
             end
         end
     end)
+end
+
+function AT:OnLogout()
+    if auctionFrame then
+        auctionFrame:UnregisterAllEvents()
+        auctionFrame = nil
+    end
+end
 end
