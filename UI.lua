@@ -233,12 +233,21 @@ end
 local function CreateMiniTracker()
     local btn = CreateFrame("Button", "InfoBotWoWMini", UIParent, "BackdropTemplate")
     btn:SetSize(160, 28)
-    btn:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -220, -4)
     btn:SetMovable(true)
     btn:EnableMouse(true)
     btn:RegisterForDrag("LeftButton")
     btn:SetScript("OnDragStart", btn.StartMoving)
-    btn:SetScript("OnDragStop", btn.StopMovingOrSizing)
+    btn:SetScript("OnDragStop", function()
+        btn:StopMovingOrSizing()
+        -- Save position to saved variables.
+        InfoBotWoWChar.miniTrackerPosition = {
+            point = "TOPRIGHT",
+            relativeTo = "UIParent",
+            relativePoint = "TOPRIGHT",
+            xOffset = btn:GetRect() and (btn:GetRight() - UIParent:GetRight()) or -220,
+            yOffset = btn:GetRect() and (btn:GetTop() - UIParent:GetTop()) or -4,
+        }
+    end)
     btn:SetFrameStrata("HIGH")
 
     btn:SetBackdrop({
@@ -282,6 +291,14 @@ local function CreateMiniTracker()
 
     -- Initial sizing.
     btn:SetWidth(math.max(icon:GetWidth() + text:GetStringWidth() + 16, 100))
+
+    -- Restore saved position or use default.
+    local pos = InfoBotWoWChar.miniTrackerPosition
+    if pos then
+        btn:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", pos.xOffset, pos.yOffset)
+    else
+        btn:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -220, -4)
+    end
 
     UI.miniTracker = btn
     UI.miniText    = text
