@@ -14,18 +14,18 @@ local function SaveCurrentGold()
     local realm = GetRealmName()
     local _, classFile = UnitClass("player")
 
-    local entry = InfoBotWoWDB.characters[key] or {}
+    local entry = PocketLedgerDB.characters[key] or {}
     entry.name     = name
     entry.realm    = realm
     entry.class    = classFile
     entry.gold     = GetMoney()
     entry.lastSeen = time()
-    InfoBotWoWDB.characters[key] = entry
+    PocketLedgerDB.characters[key] = entry
 end
 
 function GT:OnLogin()
     -- Snapshot session-start gold before any changes this session.
-    InfoBotWoWChar.sessionStartGold = GetMoney()
+    PocketLedgerChar.sessionStartGold = GetMoney()
 
     -- Persist current gold into the account-wide DB.
     SaveCurrentGold()
@@ -55,13 +55,13 @@ end
 
 -- Returns the net gold change since the session started (may be negative).
 function GT:GetSessionChange()
-    return GetMoney() - (InfoBotWoWChar.sessionStartGold or GetMoney())
+    return GetMoney() - (PocketLedgerChar.sessionStartGold or GetMoney())
 end
 
 -- Returns a sorted list of all known character entries.
 function GT:GetAllCharacters()
     local list = {}
-    for key, data in pairs(InfoBotWoWDB.characters) do
+    for key, data in pairs(PocketLedgerDB.characters) do
         list[#list + 1] = { key = key, data = data }
     end
     table.sort(list, function(a, b)

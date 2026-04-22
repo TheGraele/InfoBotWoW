@@ -35,7 +35,20 @@ local DEFAULT_OPTIONS = {
 -- ── Helpers ──────────────────────────────────────────────────────────────────
 
 local function ClassColor(classFile)
-    local c = RAID_CLASS_COLORS and classFile and RAID_CLASS_COLORS[classFile]
+    local c
+    if classFile and C_ClassColor and C_ClassColor.GetClassColor then
+        local color = C_ClassColor.GetClassColor(classFile)
+        if color then
+            c = {
+                r = color.r,
+                g = color.g,
+                b = color.b,
+            }
+        end
+    end
+    if not c then
+        c = RAID_CLASS_COLORS and classFile and RAID_CLASS_COLORS[classFile]
+    end
     if not c then return "|cffffffff" end
     return string.format("|cff%02x%02x%02x",
         math.floor(c.r * 255),
@@ -68,19 +81,19 @@ function UI:GetBarOptions()
 end
 
 function UI:GetOptions()
-    InfoBotWoWChar = InfoBotWoWChar or {}
+    PocketLedgerChar = PocketLedgerChar or {}
 
     -- Migrate legacy barOptions keys into the unified options table.
-    if InfoBotWoWChar.barOptions and not InfoBotWoWChar.uiOptions then
-        InfoBotWoWChar.uiOptions = {
-            showFPS = InfoBotWoWChar.barOptions.showFPS,
-            showXP = InfoBotWoWChar.barOptions.showXP,
-            showLocation = InfoBotWoWChar.barOptions.showLocation,
+    if PocketLedgerChar.barOptions and not PocketLedgerChar.uiOptions then
+        PocketLedgerChar.uiOptions = {
+            showFPS = PocketLedgerChar.barOptions.showFPS,
+            showXP = PocketLedgerChar.barOptions.showXP,
+            showLocation = PocketLedgerChar.barOptions.showLocation,
         }
     end
 
-    InfoBotWoWChar.uiOptions = InfoBotWoWChar.uiOptions or {}
-    local o = InfoBotWoWChar.uiOptions
+    PocketLedgerChar.uiOptions = PocketLedgerChar.uiOptions or {}
+    local o = PocketLedgerChar.uiOptions
     for k, v in pairs(DEFAULT_OPTIONS) do
         if o[k] == nil then
             o[k] = v
@@ -90,7 +103,7 @@ function UI:GetOptions()
 end
 
 function UI:ResetOptionsToDefaults()
-    InfoBotWoWChar.uiOptions = nil
+    PocketLedgerChar.uiOptions = nil
     self:GetOptions()
 end
 
@@ -286,14 +299,6 @@ function UI:UpdateMiniTrackerLayout()
 
     self.miniTracker:SetScale(options.barScale or 1.0)
 
-    self.miniTracker:ClearAllPoints()
-    local pos = InfoBotWoWChar and InfoBotWoWChar.miniTrackerPosition
-    if pos then
-        self.miniTracker:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", pos.xOffset, pos.yOffset)
-    else
-        self.miniTracker:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -220, -4)
-    end
-
     self.miniIcon:ClearAllPoints()
     self.miniText:ClearAllPoints()
     if self.miniXPBar then
@@ -357,7 +362,7 @@ end
 -- ── Frame construction ────────────────────────────────────────────────────────
 
 local function CreateMainFrame()
-    local f = CreateFrame("Frame", "InfoBotWoWMainFrame", UIParent, "BasicFrameTemplateWithInset")
+    local f = CreateFrame("Frame", "PocketLedgerMainFrame", UIParent, "BasicFrameTemplateWithInset")
     f:SetSize(FRAME_W, FRAME_H)
     f:SetPoint("CENTER")
     f:SetClampedToScreen(true)
@@ -371,7 +376,7 @@ local function CreateMainFrame()
     f:Hide()
 
     -- Allow ESC to close the window.
-    tinsert(UISpecialFrames, "InfoBotWoWMainFrame")
+    tinsert(UISpecialFrames, "PocketLedgerMainFrame")
 
     f.TitleText:SetText("Pocket Ledger")
 
@@ -384,7 +389,7 @@ local function CreateMainFrame()
         if UI.miniTracker then
             UI.miniTracker:ClearAllPoints()
             UI.miniTracker:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-            InfoBotWoWChar.miniTrackerPosition = nil
+            PocketLedgerChar.miniTrackerPosition = nil
             print("|cff00ccff[Pocket Ledger]|r Mini tracker reset to center.")
         end
     end)
@@ -419,9 +424,9 @@ local function CreateMainFrame()
         return check
     end
 
-    local fpsCheck = CreateOptionCheck(12, -58, "FPS", "showFPS")
-    local xpCheck = CreateOptionCheck(98, -58, "XP / ETA", "showXP")
-    local locCheck = CreateOptionCheck(212, -58, "Location", "showLocation")
+    local fpsCheck = CreateOptionCheck(88, -58, "FPS", "showFPS")
+    local xpCheck = CreateOptionCheck(164, -58, "XP / ETA", "showXP")
+    local locCheck = CreateOptionCheck(282, -58, "Location", "showLocation")
 
     local opts = UI:GetBarOptions()
     fpsCheck:SetChecked(opts.showFPS)
@@ -429,12 +434,12 @@ local function CreateMainFrame()
     locCheck:SetChecked(opts.showLocation)
 
     -- Scroll frame (leaves room for title bar + close button)
-    local sf = CreateFrame("ScrollFrame", "InfoBotWoWScroll", f, "UIPanelScrollFrameTemplate")
+    local sf = CreateFrame("ScrollFrame", "PocketLedgerScroll", f, "UIPanelScrollFrameTemplate")
     sf:SetPoint("TOPLEFT",     f, "TOPLEFT",   8, -84)
     sf:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -26, 5)
 
     -- Scroll child (content)
-    local content = CreateFrame("Frame", "InfoBotWoWContent", sf)
+    local content = CreateFrame("Frame", "PocketLedgerContent", sf)
     content:SetWidth(FRAME_W - 45)
     content:SetHeight(1)  -- dynamically resized in Refresh()
     sf:SetScrollChild(content)
@@ -497,7 +502,7 @@ function UI:Refresh()
         lines[#lines + 1] = ""
         lines[#lines + 1] = "|cff00ccff-- Session Summary ---------------------------|r"
 
-    local startGold = InfoBotWoWChar.sessionStartGold or 0
+    local startGold = PocketLedgerChar.sessionStartGold or 0
     local curGold   = GetMoney()
     local change    = GT:GetSessionChange()
 
@@ -571,19 +576,35 @@ end
 -- ── Slash commands ────────────────────────────────────────────────────────────
 
 local function RegisterSlash()
-    SLASH_INFOBOTWOW1 = "/ibot"
-    SLASH_INFOBOTWOW2 = "/infobot"
-    SlashCmdList["INFOBOTWOW"] = function(msg)
+    SLASH_POCKETLEDGER1 = "/pl"
+    SLASH_POCKETLEDGER2 = "/pocketledger"
+    SlashCmdList["POCKETLEDGER"] = function(msg)
+        local function CountChars(db)
+            if type(db) ~= "table" or type(db.characters) ~= "table" then
+                return 0
+            end
+            local n = 0
+            for _ in pairs(db.characters) do
+                n = n + 1
+            end
+            return n
+        end
+
         msg = strtrim(msg):lower()
         if msg == "help" then
             print("|cff00ccff[Pocket Ledger]|r commands:")
-            print("  |cffffd700/ibot|r         — open / close the window")
-            print("  |cffffd700/ibot help|r     — show this help")
-            print("  |cffffd700/ibot reset|r    — reset session gold baseline to current gold")
-            print("  |cffffd700/ibot options|r  — open Pocket Ledger options")
-            print("  |cffffd700/ibot defaults|r — reset options to defaults")
+            print("  |cffffd700/pl|r            — open / close the window")
+            print("  |cffffd700/pl help|r       — show this help")
+            print("  |cffffd700/pl reset|r      — reset session gold baseline to current gold")
+            print("  |cffffd700/pl options|r    — open Pocket Ledger options")
+            print("  |cffffd700/pl defaults|r   — reset options to defaults")
+            print("  |cffffd700/pl diag|r       — print DB diagnostics")
+        elseif msg == "diag" then
+            local p = CountChars(PocketLedgerDB)
+            local b = CountChars(PocketLedgerBackupDB)
+            print(string.format("|cff00ccff[Pocket Ledger]|r DB chars: Primary=%d Backup=%d", p, b))
         elseif msg == "reset" then
-            InfoBotWoWChar.sessionStartGold = GetMoney()
+            PocketLedgerChar.sessionStartGold = GetMoney()
             print("|cff00ccff[Pocket Ledger]|r Session baseline reset to " .. ns.FormatGold(GetMoney()))
         elseif msg == "options" or msg == "settings" then
             UI:OpenOptions()
@@ -594,7 +615,7 @@ local function RegisterSlash()
             UI:Notify("Options reset to defaults.")
         else
             if not UI:GetOptions().enabled then
-                UI:Notify("Addon display is disabled. Use /ibot options to re-enable.")
+                UI:Notify("Addon display is disabled. Use /pl options to re-enable.")
                 return
             end
             if UI.mainFrame:IsShown() then
@@ -610,7 +631,7 @@ end
 -- ── Mini gold tracker ─────────────────────────────────────────────────────────
 
 local function CreateMiniTracker()
-    local btn = CreateFrame("Button", "InfoBotWoWMini", UIParent, "BackdropTemplate")
+    local btn = CreateFrame("Button", "PocketLedgerMini", UIParent, "BackdropTemplate")
     btn:SetSize(220, 28)
     btn:SetMovable(true)
     btn:EnableMouse(true)
@@ -627,7 +648,7 @@ local function CreateMiniTracker()
             return
         end
         -- Save position to saved variables.
-        InfoBotWoWChar.miniTrackerPosition = {
+        PocketLedgerChar.miniTrackerPosition = {
             point = "TOPRIGHT",
             relativeTo = "UIParent",
             relativePoint = "TOPRIGHT",
@@ -727,13 +748,19 @@ local function CreateMiniTracker()
     UI:UpdateMiniTrackerDisplay()
 
     -- Restore saved position or use default.
-    local pos = InfoBotWoWChar.miniTrackerPosition
+    local pos = PocketLedgerChar.miniTrackerPosition
+    btn:ClearAllPoints()
+    if pos then
+        btn:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", pos.xOffset, pos.yOffset)
+    else
+        btn:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -220, -4)
+    end
     UI:UpdateMiniTrackerLayout()
 
 end
 
 local function CreateOptionsPanel()
-    local panel = CreateFrame("Frame", "InfoBotWoWOptionsPanel")
+    local panel = CreateFrame("Frame", "PocketLedgerOptionsPanel")
     panel.name = "Pocket Ledger"
     panel.OnCommit = function() end
     panel.OnDefault = function()
@@ -932,7 +959,7 @@ local function CreateOptionsPanel()
         if UI.miniTracker then
             UI.miniTracker:ClearAllPoints()
             UI.miniTracker:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-            InfoBotWoWChar.miniTrackerPosition = nil
+            PocketLedgerChar.miniTrackerPosition = nil
             UI:Notify("Mini tracker reset to center.")
         end
     end)
@@ -940,13 +967,13 @@ local function CreateOptionsPanel()
     AddHeader("Mini Bar Stats")
     AddCheckbox("Show gold on mini bar", "showGold")
     AddCheckbox("Show FPS on mini bar", "showFPS")
+    AddCheckbox("Show location + coordinates on mini bar", "showLocation")
     AddCheckbox("Show XP needed + ETA on mini bar", "showXP")
     AddRadioGroup("XP display mode", "xpDisplayMode", {
         { label = "Left + ETA", value = "left" },
         { label = "Current/Total + ETA", value = "current" },
         { label = "Mini XP Bar", value = "bar" },
     })
-    AddCheckbox("Show location + coordinates on mini bar", "showLocation")
     AddRadioGroup("Bar orientation", "barOrientation", {
         { label = "Horizontal", value = "horizontal" },
         { label = "Vertical", value = "vertical" },

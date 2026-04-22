@@ -4,8 +4,8 @@
 ## Author: Graele
 ## Version: 0.1-alpha
 ## IconTexture: Interface\AddOns\PocketLedger\icon
-## SavedVariables: PocketLedgerDB,InfoBotWoWDB
-## SavedVariablesPerCharacter: PocketLedgerChar,InfoBotWoWChar
+## SavedVariables: PocketLedgerDB,PocketLedgerBackupDB
+## SavedVariablesPerCharacter: PocketLedgerChar
 
 Core.lua
 GoldTracker.lua

@@ -8,13 +8,13 @@ A lightweight World of Warcraft addon that tracks gold across all your character
 - **Session Summary** — Tracks how much gold you've earned or spent since logging in.
 - **Auction House Tracking** — Automatically scans your active auctions when you visit the AH, showing item details, buyout prices, and color-coded time remaining.
 - **Mini Gold Tracker** — A small, draggable on-screen display showing your current gold. Click it to open the full Pocket Ledger window.
-- **Slash Commands** — `/ibot` or `/infobot` to toggle the window, `/ibot reset` to reset your session baseline, `/ibot help` for usage info.
+- **Slash Commands** — `/pl` or `/pocketledger` to toggle the window, `/pl reset` to reset your session baseline, `/pl help` for usage info.
 
 ## Installation
 
 1. Download or clone this repository:
    ```bash
-   git clone git@github.com:TheGraele/InfoBotWoW.git
+   git clone git@github.com:TheGraele/PocketLedger.git
    ```
 2. Copy (or symlink) the folder into your WoW addons directory and **rename it to `PocketLedger`**:
    ```
@@ -27,9 +27,9 @@ A lightweight World of Warcraft addon that tracks gold across all your character
 
 | Command | Description |
 |---|---|
-| `/ibot` | Toggle the Pocket Ledger window |
-| `/ibot help` | Show available commands |
-| `/ibot reset` | Reset session gold baseline to current gold |
+| `/pl` | Toggle the Pocket Ledger window |
+| `/pl help` | Show available commands |
+| `/pl reset` | Reset session gold baseline to current gold |
 
 You can also click the mini gold tracker bar (top-right of screen) to toggle the window. The bar is draggable.
 

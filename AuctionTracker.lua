@@ -53,18 +53,18 @@ local function ScanOwnedAuctions()
         end
     end
 
-    InfoBotWoWDB.auctions[key]              = results
-    InfoBotWoWDB.auctions[key .. "_scanned"] = time()
+    PocketLedgerDB.auctions[key]              = results
+    PocketLedgerDB.auctions[key .. "_scanned"] = time()
 end
 
 function AT:GetAuctions(charKey)
     charKey = charKey or ns.GetCharKey()
-    return InfoBotWoWDB.auctions[charKey] or {}
+    return PocketLedgerDB.auctions[charKey] or {}
 end
 
 function AT:GetLastScanTime(charKey)
     charKey = charKey or ns.GetCharKey()
-    return InfoBotWoWDB.auctions[charKey .. "_scanned"]
+    return PocketLedgerDB.auctions[charKey .. "_scanned"]
 end
 
 function AT:GetTimeLeftText(seconds)
