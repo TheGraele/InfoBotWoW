@@ -1,0 +1,13 @@
+package-as: PocketLedger
+
+enable-nolib-creation: no
+
+# Add your CurseForge project ID here once the addon is listed:
+# curse-project-id: YOUR_PROJECT_ID_HERE
+
+ignore:
+  - .git
+  - .github
+  - .gitignore
+  - .vscode
+  - README.md
